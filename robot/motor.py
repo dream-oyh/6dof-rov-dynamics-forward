@@ -1,15 +1,15 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+from utils import ENU2NED
 
 class MOTOR:
     def __init__(self, data_dir):
         # 转换前的 ENU 坐标系下的推力器方向
         r_f_enu = np.array(
             [
-                [0.707, 0.707, 0],
                 [0.707, -0.707, 0],
+                [0.707, 0.707, 0],
                 [-0.707, 0.707, 0],
                 [-0.707, -0.707, 0],
                 [0, 0, 1],
@@ -20,8 +20,8 @@ class MOTOR:
         # 转换前的 ENU 坐标系下的推力器位置
         r_p_enu = np.array(
             [
-                [0.1355, -0.1, -0.0725],
                 [0.1355, 0.1, -0.0725],
+                [0.1355, -0.1, -0.0725],
                 [-0.1475, -0.1, -0.0725],
                 [-0.1475, 0.1, -0.0725],
                 [0.0025, -0.1105, -0.005],
@@ -30,18 +30,9 @@ class MOTOR:
         )
 
         # 将推力器方向从 ENU 转换到 NED
-        self.r_f = np.zeros_like(r_f_enu)
-        for i in range(r_f_enu.shape[0]):
-            self.r_f[i, 0] = r_f_enu[i, 1]  # y_enu -> x_ned
-            self.r_f[i, 1] = r_f_enu[i, 0]  # x_enu -> y_ned
-            self.r_f[i, 2] = -r_f_enu[i, 2]  # -z_enu -> z_ned
-
+        self.r_f = ENU2NED(r_f_enu)
         # 将推力器位置从 ENU 转换到 NED
-        self.r_p = np.zeros_like(r_p_enu)
-        for i in range(r_p_enu.shape[0]):
-            self.r_p[i, 0] = r_p_enu[i, 1]  # y_enu -> x_ned
-            self.r_p[i, 1] = r_p_enu[i, 0]  # x_enu -> y_ned
-            self.r_p[i, 2] = -r_p_enu[i, 2]  # -z_enu -> z_ned
+        self.r_p = ENU2NED(r_p_enu)
 
         self.data_dir = data_dir
         self.tau = self._calculate_forces_and_torques()
@@ -83,10 +74,10 @@ class MOTOR:
         # 绘制原点
         ax.scatter(0, 0, 0, color="k", s=100)
 
-        # 绘制坐标轴
-        ax.quiver(0, 0, 0, 1, 0, 0, color="r", label="X轴")
-        ax.quiver(0, 0, 0, 0, 1, 0, color="g", label="Y轴")
-        ax.quiver(0, 0, 0, 0, 0, 1, color="b", label="Z轴")
+        # # 绘制坐标轴
+        # ax.quiver(0, 0, 0, 1, 0, 0, color="r", label="X轴")
+        # ax.quiver(0, 0, 0, 0, 1, 0, color="g", label="Y轴")
+        # ax.quiver(0, 0, 0, 0, 0, 1, color="b", label="Z轴")
 
         # 绘制推力器位置和方向
         for i in range(6):

@@ -100,3 +100,11 @@ def update_pos(pos, v_b, sample_time):
     v_n[3:] = T @ v_b[3:]
     pos += v_n * sample_time
     return pos
+
+
+def ENU2NED(enu_data):
+    ned_data = enu_data.copy()
+    ned_data[:, 0] = enu_data[:, 1]
+    ned_data[:, 1] = enu_data[:, 0]
+    ned_data[:, 2] = -enu_data[:, 2]
+    return ned_data

@@ -138,7 +138,7 @@ class ROV:
             [
                 self.X_udot,
                 self.Y_vdot,
-           self.Z_wdot,
+                self.Z_wdot,
                 self.K_pdot,
                 self.M_qdot,
                 self.N_rdot,
@@ -221,7 +221,7 @@ class ROV:
         pos_pred = np.zeros((self.n_timestamps, 6))
         # set initial data
         # v_pred[0, :] = self.vel_b[0, :]
-        v_pred[0, :] = np.array([0, 0, 0, 0, 0, 0])
+        v_pred[0, :] = np.array([0.447, 0.050, 0.3049, -0.0029, 0.0014, 0.414])
         pos_pred[0, :] = self.pos[0, :]
         M_rb = self.M_rb
         M_a = self.M_a
@@ -233,16 +233,16 @@ class ROV:
             v_current = v_pred[t, :]
             euler_current = pos_pred[t, 3:]
 
-            C_rb = self.calculate_C(M_rb+M_zg, v_current)
+            C_rb = self.calculate_C(M_rb + M_zg, v_current)
             C_a = self.calculate_C(M_a, v_current)
-
             g = self.calculate_buoyancy(euler_current)
-
             C_v = np.dot((C_rb + C_a), v_current)
             D_v = np.dot(self.D(v_current), v_current)
 
             tau = motor.tau[t, :]
 
+            v_dot_real = (self.vel_b[t + 1, :] - self.vel_b[t, :]) / 0.05
+            # tau = np.dot(M, v_dot_real) + C_v + D_v + g
             v_dot = np.linalg.inv(M) @ (tau - C_v - D_v - g)
             v_pred[t + 1, :] = v_current + v_dot * 0.05
             pos_pred[t + 1, :] = update_pos(pos_pred[t, :], v_current, 0.05)
