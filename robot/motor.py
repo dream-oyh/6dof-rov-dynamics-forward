@@ -1,7 +1,9 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+
 from utils import ENU2NED
+
 
 class MOTOR:
     def __init__(self, data_dir):
@@ -29,10 +31,12 @@ class MOTOR:
             ]
         )
 
-        # 将推力器方向从 ENU 转换到 NED
+        # # 将推力器方向从 ENU 转换到 NED
         self.r_f = ENU2NED(r_f_enu)
-        # 将推力器位置从 ENU 转换到 NED
+        # self.r_f = r_f_enu
+        # # 将推力器位置从 ENU 转换到 NED
         self.r_p = ENU2NED(r_p_enu)
+        # self.r_p = r_p_enu
 
         self.data_dir = data_dir
         self.tau = self._calculate_forces_and_torques()
@@ -75,9 +79,9 @@ class MOTOR:
         ax.scatter(0, 0, 0, color="k", s=100)
 
         # # 绘制坐标轴
-        # ax.quiver(0, 0, 0, 1, 0, 0, color="r", label="X轴")
-        # ax.quiver(0, 0, 0, 0, 1, 0, color="g", label="Y轴")
-        # ax.quiver(0, 0, 0, 0, 0, 1, color="b", label="Z轴")
+        # ax.quiver(0, 0, 0, 1, 0, 0, color="r", label="X 轴")
+        # ax.quiver(0, 0, 0, 0, 1, 0, color="g", label="Y 轴")
+        # ax.quiver(0, 0, 0, 0, 0, 1, color="b", label="Z 轴")
 
         # 绘制推力器位置和方向
         for i in range(6):
