@@ -32,18 +32,19 @@ class MOTOR:
         )
 
         # # 将推力器方向从 ENU 转换到 NED
-        self.r_f = ENU2NED(r_f_enu)
-        # self.r_f = r_f_enu
+        # self.r_f = ENU2NED(r_f_enu)
+        self.r_f = r_f_enu
         # # 将推力器位置从 ENU 转换到 NED
-        self.r_p = ENU2NED(r_p_enu)
-        # self.r_p = r_p_enu
+        # self.r_p = ENU2NED(r_p_enu)
+        self.r_p = r_p_enu
 
         self.data_dir = data_dir
-        self.tau = self._calculate_forces_and_torques()
+        # self.tau = self._calculate_forces_and_torques()
+        self.tau = self._read_data()
 
     def _read_data(self):
 
-        thrust_data = pd.read_csv(self.data_dir, sep=",").to_numpy()[:, 1:7]
+        thrust_data = pd.read_csv(self.data_dir, sep=",").to_numpy()[:, 0:6]
         return thrust_data
 
     def _calculate_forces_and_torques(self):

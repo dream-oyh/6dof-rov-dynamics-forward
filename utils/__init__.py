@@ -90,15 +90,15 @@ def H(r):
 
 
 def update_pos(pos, v_b, sample_time):
-    phi = pos[3]
-    theta = pos[4]
-    psi = pos[5]
+    phi = pos[0]
+    theta = pos[1]
+    psi = pos[2]
     R = Rzyx(phi, theta, psi)
     T = Tzyx(phi, theta)
     v_n = np.zeros(6)
     v_n[:3] = R @ v_b[:3]
     v_n[3:] = T @ v_b[3:]
-    pos += v_n * sample_time
+    pos += v_n[3:] * sample_time
     return pos
 
 

@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from scipy.spatial.transform import Rotation as R
 
 from utils import Rzyx, S, Tzyx, update_pos
 
@@ -11,13 +10,11 @@ class ROV:
     def __init__(self, data_dir):
         self.data_dir = data_dir
         self.pose_data = self._read_data()
-        self.timestamps = self.pose_data[:, 0]
-        self.xyz = self.pose_data[:, 1:4]
-        self.orientation = self.pose_data[:, 4:8]  # 四元数 xyzw
-        self.euler_angles = R.from_quat(self.orientation).as_euler("xyz")
-        self.pos = np.concatenate([self.xyz, self.euler_angles], axis=1)
-        self.vel_g = np.concatenate(
-            [self.pose_data[:, 8:11], self.pose_data[:, 11:14]], axis=1
+        # self.timestamps = self.pose_data[:, 0]
+        self.timestamps = np.array(range(len(self.pose_data))) * 0.05
+        self.euler_angles = self.pose_data[:, 0:3]
+        self.vel_b = np.concatenate(
+            [self.pose_data[:, 3:6], self.pose_data[:, 6:9]], axis=1
         )
 
         self.n_timestamps = len(self.timestamps)
@@ -85,7 +82,7 @@ class ROV:
         self.N_r = -0.07
         self.N_rr = -1.55
 
-        self.vel_b = self._transform_vel()
+        # self.vel_b = self._transform_vel()
         self.r_bg = np.array([0, 0, 0.02], float)  # CG w.r.t. to the CO  重心向量
         # self.r_bb = np.array([0, 0, 0], float)  # CB w.r.t. to the CO  浮心向量
 
@@ -235,34 +232,34 @@ class ROV:
         cth = np.cos(theta)
         sphi = np.sin(phi)
         cphi = np.cos(phi)
-        g = np.array(
-            [
-                (W - B) * sth,
-                -(W - B) * sphi * cth,
-                -(W - B) * cphi * cth,
-                0.01 * W * cth * sphi,
-                0.01 * W * sth,
-                0,
-            ]
-        )
         # g = np.array(
         #     [
         #         (W - B) * sth,
-        #         -(W - B) * cth * sphi,
-        #         -(W - B) * cth * cphi,
-        #         self.r_bg[2] * W * cth * sphi,
-        #         self.r_bg[2] * W * sth,
+        #         -(W - B) * sphi * cth,
+        #         -(W - B) * cphi * cth,
+        #         0.01 * W * cth * sphi,
+        #         0.01 * W * sth,
         #         0,
         #     ]
         # )
+        g = np.array(
+            [
+                (W - B) * sth,
+                -(W - B) * cth * sphi,
+                -(W - B) * cth * cphi,
+                self.r_bg[2] * W * cth * sphi,
+                self.r_bg[2] * W * sth,
+                0,
+            ]
+        )
         return g
 
     def dynamics(self, motor: MOTOR):
         v_pred = np.zeros((self.n_timestamps, 6))
-        pos_pred = np.zeros((self.n_timestamps, 6))
+        euler_pred = np.zeros((self.n_timestamps, 3))
         # set initial data
         v_pred[0, :] = self.vel_b[0, :]
-        pos_pred[0, :] = self.pos[0, :]
+        euler_pred[0, :] = self.euler_angles[0, :]
         M_rb = self.M_rb
         M_a = self.M_a
         M_zg = self.M_zg
@@ -271,9 +268,9 @@ class ROV:
         for t in range(self.n_timestamps - 1):
 
             v_current = v_pred[t, :]
-            euler_current = pos_pred[t, 3:]
+            euler_current = euler_pred[t, :3]
 
-            C_rb = self.calculate_Ca(M_rb + M_zg, v_current)
+            C_rb = self.calculate_Ca(M_rb, v_current)
             C_a = self.calculate_Ca(M_a, v_current)
             g = self.calculate_buoyancy(euler_current)
             C_v = np.dot((C_rb + C_a), v_current)
@@ -285,6 +282,6 @@ class ROV:
             # tau = np.dot(M, v_dot_real) + C_v + D_v + g
             v_dot = np.linalg.inv(M) @ (tau - C_v - D_v - g)
             v_pred[t + 1, :] = v_current + v_dot * 0.05
-            pos_pred[t + 1, :] = update_pos(pos_pred[t, :], v_current,0.05)
+            euler_pred[t + 1, :] = update_pos(euler_current, v_current, 0.05)
 
         return v_pred
