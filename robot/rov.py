@@ -16,7 +16,7 @@ class ROV:
         self.vel_b = np.concatenate(
             [self.pose_data[:, 3:6], self.pose_data[:, 6:9]], axis=1
         )
-
+        self.acc = np.diff(self.vel_b, axis=0) / 0.05
         self.n_timestamps = len(self.timestamps)
 
         # self.mass = 11.2
@@ -285,3 +285,23 @@ class ROV:
             euler_pred[t + 1, :] = update_pos(euler_current, v_current, 0.05)
 
         return v_pred
+
+    def update_params(self, params):
+        self.X_udot = params[0]
+        self.Y_vdot = params[1]
+        self.Z_wdot = params[2]
+        self.K_pdot = params[3]
+        self.M_qdot = params[4]
+        self.N_rdot = params[5]
+        self.X_u = params[6]
+        self.Y_v = params[7]
+        self.Z_w = params[8]
+        self.K_p = params[9]
+        self.M_q = params[10]
+        self.N_r = params[11]
+        self.X_uu = params[12]
+        self.Y_vv = params[13]
+        self.Z_ww = params[14]
+        self.K_pp = params[15]
+        self.M_qq = params[16]
+        self.N_rr = params[17]
