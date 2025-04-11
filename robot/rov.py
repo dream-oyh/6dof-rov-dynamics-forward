@@ -82,6 +82,29 @@ class ROV:
         self.N_r = -0.07
         self.N_rr = -1.55
 
+        self.hydro_coff = np.array(
+            [
+                self.X_udot,
+                self.Y_vdot,
+                self.Z_wdot,
+                self.K_pdot,
+                self.M_qdot,
+                self.N_rdot,
+                self.X_u,
+                self.Y_v,
+                self.Z_w,
+                self.K_p,
+                self.M_q,
+                self.N_r,
+                self.X_uu,
+                self.Y_vv,
+                self.Z_ww,
+                self.K_pp,
+                self.M_qq,
+                self.N_rr,
+            ]
+        )
+
         # self.vel_b = self._transform_vel()
         self.r_bg = np.array([0, 0, 0.02], float)  # CG w.r.t. to the CO  重心向量
         # self.r_bb = np.array([0, 0, 0], float)  # CB w.r.t. to the CO  浮心向量
@@ -90,9 +113,9 @@ class ROV:
         pose_data = pd.read_csv(self.data_dir).to_numpy()
         return pose_data
 
-    def _transform_vel(self):
-        linear_velocity_inertial = np.zeros_like(self.vel_g[:, :3])
-        angular_velocity_inertial = np.zeros_like(self.vel_g[:, 3:])
+    def _transform_vel(self, vel_g):
+        linear_velocity_inertial = np.zeros_like(vel_g[:, :3])
+        angular_velocity_inertial = np.zeros_like(vel_g[:, 3:])
 
         for t in range(len(self.timestamps)):
             phi = self.euler_angles[t, 0]
@@ -102,8 +125,8 @@ class ROV:
             T = Tzyx(phi, theta)
             R = Rzyx(phi, theta, psi)
 
-            linear_velocity_inertial[t, :] = np.linalg.inv(R) @ self.vel_g[t, :3]
-            angular_velocity_inertial[t, :] = np.linalg.inv(T) @ self.vel_g[t, 3:]
+            linear_velocity_inertial[t, :] = np.linalg.inv(R) @ vel_g[t, :3]
+            angular_velocity_inertial[t, :] = np.linalg.inv(T) @ vel_g[t, 3:]
 
         vel_b = np.concatenate(
             [linear_velocity_inertial, angular_velocity_inertial], axis=1
@@ -180,47 +203,6 @@ class ROV:
         C[3:, 3:] = -S(np.matmul(M21, v1) + np.matmul(M22, v2))
         return C
 
-    # def calculate_Crb(self, mass, vel):
-    #     v1 = vel[:3]
-    #     v2 = vel[3:]
-    #     z_g = self.r_bg[2]
-    #     m = mass[0, 0]
-    #     J_x = mass[3, 3]
-    #     J_y = mass[4, 4]
-    #     J_z = mass[5, 5]
-    #     C_rb = np.array(
-    #         [
-    #             [0, 0, 0, m * z_g * v2[2], m * v1[2], -m * v1[1]],
-    #             [0, 0, 0, -m * v1[2], m * z_g * v2[2], m * v1[0]],
-    #             [
-    #                 0,
-    #                 0,
-    #                 0,
-    #                 -m * (z_g * v2[0] - v1[1]),
-    #                 -m * (z_g * v2[1] + v1[0]),
-    #                 0,
-    #             ],
-    #             [
-    #                 -m * z_g * v2[2],
-    #                 m * v1[2],
-    #                 m * (z_g * v2[0] - v1[1]),
-    #                 0,
-    #                 J_z * v2[2],
-    #                 -J_y * v2[1],
-    #             ],
-    #             [
-    #                 -m * v1[2],
-    #                 -m * z_g * v2[2],
-    #                 m * (z_g * v2[1] + v1[0]),
-    #                 -J_z * v2[2],
-    #                 0,
-    #                 J_x * v2[0],
-    #             ],
-    #             [m * v1[1], -m * v1[0], 0, J_y * v2[1], -J_x * v2[0], 0],
-    #         ]
-    #     )
-    #     return C_rb
-
     def calculate_buoyancy(self, euler):
         W = 112.8
         B = 114.8
@@ -232,16 +214,6 @@ class ROV:
         cth = np.cos(theta)
         sphi = np.sin(phi)
         cphi = np.cos(phi)
-        # g = np.array(
-        #     [
-        #         (W - B) * sth,
-        #         -(W - B) * sphi * cth,
-        #         -(W - B) * cphi * cth,
-        #         0.01 * W * cth * sphi,
-        #         0.01 * W * sth,
-        #         0,
-        #     ]
-        # )
         g = np.array(
             [
                 (W - B) * sth,
@@ -278,8 +250,6 @@ class ROV:
 
             tau = motor.tau[t, :]
 
-            v_dot_real = (self.vel_b[t + 1, :] - self.vel_b[t, :]) / 0.05
-            # tau = np.dot(M, v_dot_real) + C_v + D_v + g
             v_dot = np.linalg.inv(M) @ (tau - C_v - D_v - g)
             v_pred[t + 1, :] = v_current + v_dot * 0.05
             euler_pred[t + 1, :] = update_pos(euler_current, v_current, 0.05)
@@ -305,3 +275,4 @@ class ROV:
         self.K_pp = params[15]
         self.M_qq = params[16]
         self.N_rr = params[17]
+        self.hydro_coff = params
