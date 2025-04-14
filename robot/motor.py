@@ -1,9 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-from utils import ENU2NED
-
+from utils import read_columns
 
 class MOTOR:
     def __init__(self, data_dir):
@@ -38,9 +36,21 @@ class MOTOR:
         # self.r_p = ENU2NED(r_p_enu)
         self.r_p = r_p_enu
 
+
+        self.K = np.diag([40] * 8)
+        self.T = [
+            [0.707, 0.707, -0.707, -0.707, 0, 0, 0, 0],
+            [-0.707, 0.707, -0.707, 0.707, 0, 0, 0, 0],
+            [0, 0, 0, 0, -1, 1, 1, -1],
+            [0.06, -0.06, 0.06, -0.06, -0.218, -0.218, 0.218, 0.218],
+            [0.06, 0.06, -0.06, -0.06, 0.120, -0.1208, 0.120, -0.120],
+            [-0.1888, 0.1888, 0.1888, -0.1888, 0, 0, 0, 0],
+        ]
+
         self.data_dir = data_dir
         # self.tau = self._calculate_forces_and_torques()
         self.tau = self._read_data()
+        
 
     def _read_data(self):
 
@@ -98,3 +108,15 @@ class MOTOR:
         ax.set_title("BlueROV2 坐标系和推力器配置")
         ax.legend()
         plt.show()
+
+    def allocation(self, tau):
+
+        control_input = np.linalg.inv(self.K) @ np.linalg.inv(self.T) @ tau
+        return control_input
+
+    def thruster(self, u):
+        tau = self.T @ self.K @ u
+        return tau
+
+    def read_tau(self):
+        return read_columns(self.tau)

@@ -1,0 +1,2 @@
+该组数据由Overactuated-ROV-Simulation-oyh项目中产生，由forward.m
+产生数据，thrust_data.csv中存有预设的推力，pose_data中前三列是欧拉角数据，后六列是速度数据uvwpqr

@@ -3,8 +3,8 @@ import pandas as pd
 import robot
 from plot import plot
 
-pose_dir = "matlab_data/pose_data.csv"
-thrust_dir = "matlab_data/thrust_data.csv"
+pose_dir = "20250413_data/pose_data.csv"
+thrust_dir = "20250413_data/thrust_data.csv"
 bluerov = robot.ROV(pose_dir)
 motor = robot.MOTOR(thrust_dir)
 v_pred = bluerov.dynamics(motor)

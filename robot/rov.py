@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from utils import Rzyx, S, Tzyx, update_pos
+from utils import Rzyx, S, Tzyx, read_columns, update_pos
 
 from .motor import MOTOR
 
@@ -276,3 +276,12 @@ class ROV:
         self.M_qq = params[16]
         self.N_rr = params[17]
         self.hydro_coff = params
+
+    def read_vel(self):
+        return read_columns(self.vel_b)
+
+    def read_acc(self):
+        return read_columns(self.acc)
+
+    def read_m(self):
+        return self.mass, self.J_x, self.J_y, self.J_z

@@ -1,6 +1,9 @@
+import datetime
 import math
+import os
 
 import numpy as np
+
 
 
 def Rzyx(phi, theta, psi):
@@ -110,3 +113,53 @@ def ENU2NED(enu_data):
     return ned_data
 
 
+def output(output_dir, theta, bluerov):
+
+    os.makedirs(os.path.dirname(output_dir), exist_ok=True)
+    with open(output_dir, "w", encoding="utf-8") as f:
+        result = f"""
+# {datetime.date.today()} identify results
+
+identified by least square method
+
+|参数 | 预测值 | 真实值 |
+|:---:|:---:|:---:|
+|X_udot|{theta[0]:.4f}|{bluerov.X_udot}|
+|Y_vdot|{theta[1]:.4f}|{bluerov.Y_vdot}|
+|Z_wdot|{theta[2]:.4f}|{bluerov.Z_wdot}|
+|K_pdot|{theta[3]:.4f}|{bluerov.K_pdot}|
+|M_qdot|{theta[4]:.4f}|{bluerov.M_qdot}|
+|N_rdot|{theta[5]:.4f}|{bluerov.N_rdot}|
+|X_u|{theta[6]:.4f}|{bluerov.X_u}|
+|Y_v|{theta[7]:.4f}|{bluerov.Y_v}|
+|Z_w|{theta[8]:.4f}|{bluerov.Z_w}|
+|K_p|{theta[9]:.4f}|{bluerov.K_p}|
+|M_q|{theta[10]:.4f}|{bluerov.M_q}|
+|N_r|{theta[11]:.4f}|{bluerov.N_r}|
+|X_uu|{theta[12]:.4f}|{bluerov.X_uu}|
+|Y_vv|{theta[13]:.4f}|{bluerov.Y_vv}|
+|Z_ww|{theta[14]:.4f}|{bluerov.Z_ww}|
+|K_pp|{theta[15]:.4f}|{bluerov.K_pp}|
+|M_qq|{theta[16]:.4f}|{bluerov.M_qq}|
+|N_rr|{theta[17]:.4f}|{bluerov.N_rr}|
+"""
+        f.write(result)
+
+
+def std(A):
+    A_std = np.std(A, axis=0)
+    A_std[A_std < 1e-8] = 1e-8
+    return A_std
+
+
+def mean(A):
+    return np.mean(A, axis=0)
+
+
+def z_score(A):
+    return (A - mean(A)) / std(A)
+
+
+def read_columns(matrix):
+    num_cols = matrix.shape[1]
+    return tuple(matrix[:, i] for i in range(num_cols))
